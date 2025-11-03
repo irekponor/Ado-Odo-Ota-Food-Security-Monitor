@@ -70,36 +70,7 @@ const Raster: React.FC = () => {
         // Don’t add to map by default, user toggles it
       });
 
-    // 📍 Popup on click — show pixel value of active raster
-    map.on("click", async (event: L.LeafletMouseEvent) => {
-      const { lat, lng } = event.latlng;
-      if (!activeGeoRaster) return;
-
-      try {
-        const y = activeGeoRaster.yFromLatLng(lat);
-        const x = activeGeoRaster.xFromLng(lng);
-        const pixelValue =
-          activeGeoRaster.values[0][Math.floor(activeGeoRaster.height - y)]?.[
-            Math.floor(x)
-          ];
-
-        if (pixelValue !== undefined && !isNaN(pixelValue)) {
-          L.popup()
-            .setLatLng([lat, lng])
-            .setContent(`<b>Value:</b> ${pixelValue.toFixed(2)}`)
-            .openOn(map);
-        } else {
-          L.popup()
-            .setLatLng([lat, lng])
-            .setContent("No data at this location")
-            .openOn(map);
-        }
-      } catch (err) {
-        console.warn("Popup value error:", err);
-      }
-    });
-
-    // 📘 NDVI Legend
+      // 📘 NDVI Legend
     const legend = L.control({ position: "bottomright" });
     legend.onAdd = function () {
       const div = L.DomUtil.create("div", "info legend bg-white p-2 rounded shadow");
