@@ -6,18 +6,16 @@ import GeoRasterLayer from "georaster-layer-for-leaflet";
 
 const Raster: React.FC = () => {
   useEffect(() => {
-    // Initialize map
+  // loading the map
     const map = L.map("map", {
       center: [6.7, 3.0], // Ado-Odo/Ota area
       zoom: 11,
     });
 
-    // Base map
     const baseMap = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
 
-    // ✅ NDVI Color Scale (matches your GEE palette)
     const ndviColorScale = (value: number) => {
       if (value === null || isNaN(value)) return null;
       if (value < 0.25) return "#ffffff"; // white
@@ -69,8 +67,7 @@ const Raster: React.FC = () => {
 
         // Don’t add to map by default, user toggles it
       });
-
-      // 📘 NDVI Legend
+    // 📘 NDVI Legend
     const legend = L.control({ position: "bottomright" });
     legend.onAdd = function () {
       const div = L.DomUtil.create("div", "info legend bg-white p-2 rounded shadow");
@@ -102,8 +99,8 @@ titleControl.onAdd = function () {
   const div = L.DomUtil.create("div", "map-title bg-white p-2 rounded shadow");
   div.innerHTML = `
     <h4 style="margin:0; font-weight:600;">Food Security Analysis</h4>
-    <small>Ado-Odo/Ota — <b>Moderate Risk</b> (September 2025)</small><br/>
-    <small>Map by Emmanuel Irekponor, 2025</small>
+    <b><h4> Ado-Odo/Ota —  Moderate Risk</b> (September 2025) </h4> <br/>
+     Map by Emmanuel Irekponor, 2025 
   `;
   return div;
 };
