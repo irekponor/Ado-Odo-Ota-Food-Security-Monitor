@@ -127,15 +127,17 @@ const Raster: React.FC = () => {
 
     // 🏷️ Title + Credits Overlay
     const titleControl = L.control({ position: "topright" });
-    titleControl.onAdd = function () {
-      const div = L.DomUtil.create("div", "map-title bg-white p-2 rounded shadow");
-      div.innerHTML = `
-        <h4 style="margin:0; font-weight:600;">Food Security Analysis</h4>
-        <small>Map by Emmanuel Irekponor, 2025</small>
-      `;
-      return div;
-    };
-    titleControl.addTo(map);
+titleControl.onAdd = function () {
+  const div = L.DomUtil.create("div", "map-title bg-white p-2 rounded shadow");
+  div.innerHTML = `
+    <h4 style="margin:0; font-weight:600;">Food Security Analysis</h4>
+    <small>Ado-Odo/Ota — <b>Moderate Risk</b> (September 2025)</small><br/>
+    <small>Map by Emmanuel Irekponor, 2025</small>
+  `;
+  return div;
+};
+titleControl.addTo(map);
+
 
     return () => {
       map.remove();
