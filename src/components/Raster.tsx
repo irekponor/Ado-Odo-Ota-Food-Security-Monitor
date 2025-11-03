@@ -34,9 +34,9 @@ const Raster: React.FC = () => {
       .then((georaster: any) => {
         const ndviLayer = new GeoRasterLayer({
           georaster,
-          opacity: 0.8,
+          opacity: 1,
           pixelValuesToColorFn: ndviColorScale,
-          resolution: 256,
+          resolution:  256,
         });
 
         ndviLayer.addTo(map);
