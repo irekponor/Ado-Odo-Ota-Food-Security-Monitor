@@ -9,36 +9,36 @@ const Raster: React.FC = () => {
     // Initialize map
     const map = L.map("map", {
       center: [6.7, 3.0], // Ado-Odo/Ota area
-      zoom: 10,
+      zoom: 11,
     });
 
-    // Add OpenStreetMap base
+    // Base map
     const baseMap = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
 
-    // Color scales
+    // ✅ NDVI Color Scale (matches your GEE palette)
     const ndviColorScale = (value: number) => {
-      if (value === null) return null;
-      if (value < 0.2) return "#d73027"; // Red - low
-      if (value < 0.4) return "#fee08b"; // Yellow
-      if (value < 0.6) return "#1a9850"; // Green
-      return "#006837"; // Dark Green
+      if (value === null || isNaN(value)) return null;
+      if (value < 0.25) return "#ffffff"; // white
+      if (value < 0.5) return "#ffff00"; // yellow
+      if (value < 0.75) return "#008000"; // green
+      return "#004d00"; // dark green
     };
 
+    // ✅ Rainfall Anomaly Color Scale (matches your GEE palette)
     const rainfallColorScale = (value: number) => {
-      if (value === null) return null;
-      if (value < -50) return "#d73027"; // much below average
-      if (value < 0) return "#fc8d59"; // below normal
-      if (value < 50) return "#91bfdb"; // near normal
-      return "#4575b4"; // above normal
+      if (value === null || isNaN(value)) return null;
+      if (value < -50) return "#8b4513"; // brown (low)
+      if (value < 0) return "#ffffff"; // white (neutral)
+      return "#0000ff"; // blue (high)
     };
 
     const rasterLayers: Record<string, any> = {};
-    let activeGeoRaster: any = null; // To track active raster for popups
+    let activeGeoRaster: any = null; // currently active raster for popup
 
-    // NDVI LAYER
-    fetch("/geodata/ndvi.tif")
+    // 🟢 Load NDVI layer (default visible)
+    fetch("/Geodata/NDVI_AdoOdoOta_Sep2025.tif")
       .then((response) => response.arrayBuffer())
       .then((arrayBuffer) => parseGeoraster(arrayBuffer))
       .then((georaster) => {
@@ -49,13 +49,13 @@ const Raster: React.FC = () => {
           resolution: 256,
         });
         rasterLayers["NDVI (Vegetation Health)"] = ndviLayer;
-        map.addLayer(ndviLayer);
+        map.addLayer(ndviLayer); // ✅ add NDVI on load
         map.fitBounds(ndviLayer.getBounds());
-        activeGeoRaster = georaster; // Set as active for popup
+        activeGeoRaster = georaster;
       });
 
-    // RAINFALL ANOMALY LAYER
-    fetch("/geodata/rainfall_anomaly.tif")
+    // 🔵 Load Rainfall Anomaly layer (toggle off initially)
+    fetch("/Geodata/RainfallAnomaly_AdoOdoOta_Sep2025.tif")
       .then((response) => response.arrayBuffer())
       .then((arrayBuffer) => parseGeoraster(arrayBuffer))
       .then((georaster) => {
@@ -66,54 +66,64 @@ const Raster: React.FC = () => {
           resolution: 256,
         });
         rasterLayers["Rainfall Anomaly"] = rainfallLayer;
+
+        // Don’t add to map by default, user toggles it
       });
 
-    // 📍 Popup on click — show pixel value
+    // 📍 Popup on click — show pixel value of active raster
     map.on("click", async (event: L.LeafletMouseEvent) => {
       const { lat, lng } = event.latlng;
       if (!activeGeoRaster) return;
 
-      const pixelValue = activeGeoRaster.values[0][
-        Math.floor(activeGeoRaster.height - activeGeoRaster.yFromLatLng(lat))
-      ]?.[Math.floor(activeGeoRaster.xFromLng(lng))];
+      try {
+        const y = activeGeoRaster.yFromLatLng(lat);
+        const x = activeGeoRaster.xFromLng(lng);
+        const pixelValue =
+          activeGeoRaster.values[0][Math.floor(activeGeoRaster.height - y)]?.[
+            Math.floor(x)
+          ];
 
-      if (pixelValue !== undefined) {
-        L.popup()
-          .setLatLng([lat, lng])
-          .setContent(`<b>Value:</b> ${pixelValue.toFixed(2)}`)
-          .openOn(map);
-      } else {
-        L.popup()
-          .setLatLng([lat, lng])
-          .setContent("No data at this location")
-          .openOn(map);
+        if (pixelValue !== undefined && !isNaN(pixelValue)) {
+          L.popup()
+            .setLatLng([lat, lng])
+            .setContent(`<b>Value:</b> ${pixelValue.toFixed(2)}`)
+            .openOn(map);
+        } else {
+          L.popup()
+            .setLatLng([lat, lng])
+            .setContent("No data at this location")
+            .openOn(map);
+        }
+      } catch (err) {
+        console.warn("Popup value error:", err);
       }
     });
 
-    // 📘 Add Legend
+    // 📘 NDVI Legend
     const legend = L.control({ position: "bottomright" });
     legend.onAdd = function () {
       const div = L.DomUtil.create("div", "info legend bg-white p-2 rounded shadow");
       const grades = [
-        { label: "Low Vegetation", color: "#d73027" },
-        { label: "Moderate", color: "#fee08b" },
-        { label: "Good", color: "#1a9850" },
-        { label: "High / Dense", color: "#006837" },
+        { label: "Low", color: "#ffffff" },
+        { label: "Moderate", color: "#ffff00" },
+        { label: "Healthy", color: "#008000" },
+        { label: "Dense", color: "#004d00" },
       ];
 
       div.innerHTML += "<strong>NDVI Classes</strong><br/>";
       grades.forEach((g) => {
         div.innerHTML += `
-          <i style="background:${g.color}; width:18px; height:18px; float:left; margin-right:8px; opacity:0.8;"></i>${g.label}<br/>
+          <i style="background:${g.color}; width:18px; height:18px; float:left; margin-right:8px; opacity:0.9;"></i>${g.label}<br/>
         `;
       });
       return div;
     };
     legend.addTo(map);
 
-    // 📚 Layer Control
+    // 📚 Layer Control (NDVI active, Rainfall toggle)
     const baseMaps = { "OpenStreetMap": baseMap };
-    L.control.layers(baseMaps, rasterLayers, { collapsed: false }).addTo(map);
+    const overlayMaps = rasterLayers;
+    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 
     // 🏷️ Title + Credits Overlay
     const titleControl = L.control({ position: "topright" });
