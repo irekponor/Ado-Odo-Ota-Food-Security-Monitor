@@ -6,9 +6,8 @@ import GeoRasterLayer from "georaster-layer-for-leaflet";
 
 const Raster: React.FC = () => {
   useEffect(() => {
-  // loading the map
     const map = L.map("map", {
-      center: [6.7, 3.0], // Ado-Odo/Ota area
+      center: [6.7, 3.0],
       zoom: 11,
     });
 
@@ -18,24 +17,12 @@ const Raster: React.FC = () => {
 
     const ndviColorScale = (value: number) => {
       if (value === null || isNaN(value)) return null;
-      if (value < 0.25) return "#ffffff"; // white
-      if (value < 0.5) return "#ffff00"; // yellow
-      if (value < 0.75) return "#008000"; // green
-      return "#004d00"; // dark green
+      if (value < 0.25) return "#ffffff"; 
+      if (value < 0.5) return "#ffff00";  
+      if (value < 0.75) return "#008000";  
+      return "#004d00";  
     };
 
-    // ✅ Rainfall Anomaly Color Scale (matches your GEE palette)
-    const rainfallColorScale = (value: number) => {
-      if (value === null || isNaN(value)) return null;
-      if (value < -50) return "#8b4513"; // brown (low)
-      if (value < 0) return "#ffffff"; // white (neutral)
-      return "#0000ff"; // blue (high)
-    };
-
-    const rasterLayers: Record<string, any> = {};
-    let activeGeoRaster: any = null; // currently active raster for popup
-
-    // 🟢 Load NDVI layer (default visible)
     fetch("/Geodata/NDVI_AdoOdoOta_Sep2025.tif")
       .then((response) => response.arrayBuffer())
       .then((arrayBuffer) => parseGeoraster(arrayBuffer))
@@ -46,28 +33,11 @@ const Raster: React.FC = () => {
           pixelValuesToColorFn: ndviColorScale,
           resolution: 256,
         });
-        rasterLayers["NDVI (Vegetation Health)"] = ndviLayer;
-        map.addLayer(ndviLayer); // ✅ add NDVI on load
+
+        ndviLayer.addTo(map);
         map.fitBounds(ndviLayer.getBounds());
-        activeGeoRaster = georaster;
       });
 
-    // 🔵 Load Rainfall Anomaly layer (toggle off initially)
-    fetch("/Geodata/RainfallAnomaly_AdoOdoOta_Sep2025.tif")
-      .then((response) => response.arrayBuffer())
-      .then((arrayBuffer) => parseGeoraster(arrayBuffer))
-      .then((georaster) => {
-        const rainfallLayer = new GeoRasterLayer({
-          georaster,
-          opacity: 0.8,
-          pixelValuesToColorFn: rainfallColorScale,
-          resolution: 256,
-        });
-        rasterLayers["Rainfall Anomaly"] = rainfallLayer;
-
-        // Don’t add to map by default, user toggles it
-      });
-    // 📘 NDVI Legend
     const legend = L.control({ position: "bottomright" });
     legend.onAdd = function () {
       const div = L.DomUtil.create("div", "info legend bg-white p-2 rounded shadow");
@@ -87,25 +57,18 @@ const Raster: React.FC = () => {
       return div;
     };
     legend.addTo(map);
-
-    // 📚 Layer Control (NDVI active, Rainfall toggle)
-    const baseMaps = { "OpenStreetMap": baseMap };
-    const overlayMaps = rasterLayers;
-    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
-
-    // 🏷️ Title + Credits Overlay
+ 
     const titleControl = L.control({ position: "topright" });
-titleControl.onAdd = function () {
-  const div = L.DomUtil.create("div", "map-title bg-white p-2 rounded shadow");
-  div.innerHTML = `
-    <h4 style="margin:0; font-weight:600;">Food Security Analysis</h4>
-    <b><h4> Ado-Odo/Ota —  Moderate Risk</b> (September 2025) </h4> <br/>
-     Map by Emmanuel Irekponor, 2025 
-  `;
-  return div;
-};
-titleControl.addTo(map);
-
+    titleControl.onAdd = function () {
+      const div = L.DomUtil.create("div", "map-title bg-white p-2 mt-20 rounded shadow");
+      div.innerHTML = `
+        <h3 style="margin:0; font-weight:600;">Food Security Analysis</h3>
+        <b><h4>Ado-Odo/Ota — Moderate Risk</b> (September 2025)</h4><br/>
+        Map by Emmanuel Irekponor, 2025
+      `;
+      return div;
+    };
+    titleControl.addTo(map);
 
     return () => {
       map.remove();
