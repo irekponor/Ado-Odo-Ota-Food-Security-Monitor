@@ -28,7 +28,7 @@ const Raster: React.FC = () => {
       return "#004d00";  
       };
 
-    fetch("/Geodata/NDVI_AdoOdoOta_Sep2025.tif") 
+    fetch("/Geodata/NDVI_AdoOdoOta_Oct2025.tif") 
       .then((response) => response.arrayBuffer())
       .then((arrayBuffer) => parseGeoraster(arrayBuffer))
       .then((georaster: any) => {
