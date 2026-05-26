@@ -70,8 +70,8 @@ const Raster: React.FC = () => {
       const div = L.DomUtil.create("div", "map-title bg-white p-2 mt-20 rounded shadow");
       div.innerHTML = `
         <h3 style="margin:0; font-weight:600;">Food Security Analysis</h3>
-        <b><h4>Ado-Odo/Ota — Low Risk</b> (October 2025)</h4><br/>
-        Map by Emmanuel Irekponor, 2025
+        <b><h4>Ado-Odo/Ota — Low Risk</b> (March 2026)</h4><br/>
+        Map by Emmanuel Irekponor, 2026
       `;
       return div;
     };
